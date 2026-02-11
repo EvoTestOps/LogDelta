@@ -946,9 +946,13 @@ def _calculate_moving_average_all_numeric(df: pl.DataFrame, window_size: int) ->
     # Add moving average for each numeric column to the new DataFrame
     for column in numeric_cols:
         moving_avg_column = f"moving_avg_{window_size}_{column}"
-        moving_avg_df = moving_avg_df.hstack(
-            df.select(pl.col(column).rolling_mean(window_size).alias(moving_avg_column))
-        )
+        new_column = df.select(pl.col(column).rolling_mean(window_size).alias(moving_avg_column))
+        if moving_avg_df.is_empty():
+            moving_avg_df = new_column
+        else:
+            moving_avg_df = moving_avg_df.hstack(
+                df.select(pl.col(column).rolling_mean(window_size).alias(moving_avg_column))
+            )
 
     return moving_avg_df
 
