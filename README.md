@@ -28,7 +28,7 @@ unzip Hadoop.zip -d Hadoop
 ```
 Run analysis
 ```bash
-python -m logdelta.config_runner -c config.yml`
+python -m logdelta.config_runner -c config.yml
 ```
 Observer results in `LogDelta/demo/Output`. 
 
