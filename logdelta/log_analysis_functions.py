@@ -939,18 +939,13 @@ def _calculate_moving_average_all_numeric(df: pl.DataFrame, window_size: int) ->
 
     if not numeric_cols:
         raise ValueError("No numeric columns found in the DataFrame")
-
-    # Create a new DataFrame with the moving averages
-    moving_avg_df = pl.DataFrame()
-
-    # Add moving average for each numeric column to the new DataFrame
-    for column in numeric_cols:
-        moving_avg_column = f"moving_avg_{window_size}_{column}"
-        moving_avg_df = moving_avg_df.hstack(
-            df.select(pl.col(column).rolling_mean(window_size).alias(moving_avg_column))
-        )
-
-    return moving_avg_df
+    
+    # Populate the DataFrame with rolling means for numeric columns, rename the columns,
+    # return selected columns
+    return df.select([
+        pl.col(col).rolling_mean(window_size).alias(f"moving_avg_{window_size}_{col}")
+        for col in numeric_cols
+        ])
 
 def _calculate_zscore_sum(results):
     import numpy as np
