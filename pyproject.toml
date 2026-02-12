@@ -7,7 +7,7 @@ include = ["logdelta*"]
 
 [project]
 name = "logdelta"
-version = "1.0.0.post1"
+version = "1.0.1"
 description = "LogDelta - Go Beyond Grepping with NLP-based Log File Analysis"
 readme = "README.md"
 license = {file = "LICENSE"}
