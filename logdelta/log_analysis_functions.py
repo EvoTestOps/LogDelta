@@ -1003,7 +1003,14 @@ def _calculate_zscore_sum_anos(df) -> pl.DataFrame:
     """
     # Define the columns to normalize
     if isinstance(df, pl.DataFrame): 
-        distance_columns = ["kmeans_pred_ano_proba", "IF_pred_ano_proba", "RM_pred_ano_proba", "OOVD_pred_ano_proba"]
+        detector_columns = ["kmeans_pred_ano_proba", "IF_pred_ano_proba", "RM_pred_ano_proba", "OOVD_pred_ano_proba"]
+        # Only the detectors named in the config produced a column, so rank over the ones actually
+        # present. Naming all four unconditionally made every partial selection fail here - even
+        # the default detectors=["KMeans"], which asks for one column and then looked for four.
+        distance_columns = [col for col in detector_columns if col in df.columns]
+        if not distance_columns:
+            raise ValueError(f"No anomaly score columns found to rank. Expected at least one of "
+                             f"{detector_columns}, got columns: {df.columns}")
         # Replace None with np.nan for compatibility with numpy operations
         df = df.with_columns([pl.col(col).fill_nan(np.nan) for col in distance_columns])
         # Convert Polars DataFrame to a list of dictionaries
@@ -1316,30 +1323,23 @@ def _run_anomaly_detection(df_run1_files,df_other_runs_files, field, detectors=[
     # Prepare the data
     sad.prepare_train_test_data(vectorizer_class=vectorizer_class)
     
-    # Initialize the output DataFrame
-    df_anos = None
+    df_anos = sad.test_df
     
     # Run specified detectors or all if none are specified
     if detectors is None or "KMeans" in detectors:
         sad.train_KMeans()
-        df_anos = sad.predict()
-        df_anos = df_anos.rename({"pred_ano_proba": "kmeans_pred_ano_proba"})
+        predictions = sad.predict().select("pred_ano_proba").rename({"pred_ano_proba": "kmeans_pred_ano_proba"})
+        df_anos = df_anos.with_columns(predictions)
     
     if detectors is None or "IsolationForest" in detectors:
         sad.train_IsolationForest()
         predictions = sad.predict().select("pred_ano_proba").rename({"pred_ano_proba": "IF_pred_ano_proba"})
-        if df_anos is not None:
-            df_anos = df_anos.with_columns(predictions)
-        else:
-            df_anos = predictions
+        df_anos = df_anos.with_columns(predictions)
     
     if detectors is None or "RarityModel" in detectors:
         sad.train_RarityModel()
         predictions = sad.predict().select("pred_ano_proba").rename({"pred_ano_proba": "RM_pred_ano_proba"})
-        if df_anos is not None:
-            df_anos = df_anos.with_columns(predictions)
-        else:
-            df_anos = predictions
+        df_anos = df_anos.with_columns(predictions)
 
     if detectors is None or "OOVDetector" in detectors:    
         #sad.X_train=None
@@ -1347,10 +1347,7 @@ def _run_anomaly_detection(df_run1_files,df_other_runs_files, field, detectors=[
         #sad.train_OOVDetector(filter_anos=False) #This just creates the object. No training for OOVD needed
         sad.train_OOVDetector() 
         predictions = sad.predict().select("pred_ano_proba").rename({"pred_ano_proba": "OOVD_pred_ano_proba"})
-        if df_anos is not None:
-            df_anos = df_anos.with_columns(predictions)
-        else:
-            df_anos = predictions
+        df_anos = df_anos.with_columns(predictions)
 
     return df_anos
 

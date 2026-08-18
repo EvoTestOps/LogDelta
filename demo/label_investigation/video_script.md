@@ -10,24 +10,23 @@ The original dataset comes from the 2016 paper "Log Clustering-Based Problem Ide
 In this video, we’ll focus exclusively on the PageRank application from the dataset. While the dataset also includes a separate application—WordCount—that could be analyzed in a similar manner, we will leave that for a potential future investigation.
 
 ## Setup
-To get started, we’ll begin by setting up LogDelta for our analysis. First, install LogDelta using pip. Next, clone the LogDelta repository from GitHub.
+To get started, we’ll begin by setting up LogDelta for our analysis. First, clone the LogDelta repository from GitHub — no separate install step needed, since the commands below use `uv run`, which syncs the environment from the repo's own `pyproject.toml`/`uv.lock` on first use.
 After cloning the repository, navigate to the logdelta demo label-investigation folder. Finally, download the Hadoop dataset and extract its contents into the working folder. With these steps completed, we’re ready to dive into the analysis.
 
 The Hadoop dataset includes labels in a separate file for the different runs we plan to analyze. To make this analysis compatible with LogDelta’s philosophy, it’s a good idea to rename the existing runs or folders using these label names. To assist with this, we provide a script that automates the renaming process, ensuring the labels are clearly associated with each run. This makes the analysis phase much more easier to follow.
 
 ```bash
-pip install logdelta
 git clone https://github.com/EvoTestOps/LogDelta.git
 cd LogDelta/demo/label_investigation
 wget -O Hadoop.zip https://zenodo.org/records/8196385/files/Hadoop.zip?download=1
 unzip Hadoop.zip -d Hadoop
-python label_hadoop_runs_orig.py
+uv run python label_hadoop_runs_orig.py
 ```
 
 ## Visualization 
 
 ### Visualization based on file names. 
-This is the most top level analysis. It is specified in file `1_viz_file_names.yml`. To get results execute `python -m logdelta.config_runner -c 1_viz_file_names.yml`. Output is in `out_1` folder.
+This is the most top level analysis. It is specified in file `1_viz_file_names.yml`. To get results execute `uv run python -m logdelta.config_runner -c 1_viz_file_names.yml`. Output is in `out_1` folder.
 
 Simple plot show runs with two axis the number of log lines in Y-axis the runs and number of unique file names in X-axis. Number of loglines in runs can be usefull as anomolous runs are often smaller or larger than normal run. 
 
@@ -46,7 +45,7 @@ Based on this straightforward analysis, we can define boundaries to classify ano
 
 ### Visualization based on textual content.
 #### Simple plot
-Previously, we focused solely on investigating log file names. Now, we’ll analyze the actual textual content within the runs. This analysis is specified in the file `2_viz_run_content.yml`. To generate the results, execute the command: `python -m logdelta.config_runner -c 2_viz_run_content.yml`
+Previously, we focused solely on investigating log file names. Now, we’ll analyze the actual textual content within the runs. This analysis is specified in the file `2_viz_run_content.yml`. To generate the results, execute the command: `uv run python -m logdelta.config_runner -c 2_viz_run_content.yml`
 The output will be saved in the `out_2` folder. 
 
 We’ll continue by examining the output, starting once again with the Simple Plot. This plot shows the runs with two axes: the number of log lines on the Y-axis and the number of unique terms on the X-axis. When we refer to terms, we mean words or tokens. LogDelta provides several methods for splitting text into terms.
@@ -146,7 +145,7 @@ To summarize, the high-level visualization approach using boxes seems to yield f
 ### Anomaly Detection with Run Content
 We now move on to building an anomaly detection model using the textual content of the runs. To train the model, we use only the normal runs. Once the model is trained, we test it against all runs, including the normal ones. When testing a normal run, LogDelta automatically excludes that specific run from the training data. This ensures that the same run is not used for both training and testing, preventing biased results.
 
-This analysis is specified in the file `3_ano_run_content.yml`. To generate the results, execute the following command: `python -m logdelta.config_runner -c 3_ano_run_content.yml`. The output will be saved in the `out_3` folder. 
+This analysis is specified in the file `3_ano_run_content.yml`. To generate the results, execute the following command: `uv run python -m logdelta.config_runner -c 3_ano_run_content.yml`. The output will be saved in the `out_3` folder. 
 
 The output of this process is a Microsoft Excel spreadsheet. If you prefer, you can generate a CSV output instead by modifying the YAML configuration file. The spreadsheet output includes scores from multiple anomaly detection methods. These include two well-known general-purpose anomaly detection methods K-Means and Isolation Forest, as well as two custom algorithms we’ve developed: the Out-of-Vocabulary Detector and the Rarity Model.
 
@@ -170,7 +169,7 @@ Next, we analyze each log line in isolation and assign an anomaly score to each 
 
 It is important to highlight the distinction from the previous video. In that approach, we evaluated the entire textual content of a run and assigned an anomaly score to the run as a whole. In contrast, this line-by-line approach focuses on individual log lines. The difference is notable: the previous model answers the question, "Is this entire run anomalous?" whereas this model answers, "Is this specific log line anomalous?" The advantage of the line-by-line approach is its ability to pinpoint exactly which lines are anomalous, providing more detailed insights into the data.
 
-This model is specified in the file `4_ano_line_content.yml`. For line-level predictions, we need to select a specific log file to analyze. In this case, we build and test models using the main log file, `container__01_000001.log`, from all runs. This log file is the largest for each run and can be considered the main log that spawns worker processes. To generate results, execute the command: `python -m logdelta.config_runner -c 4_ano_line_content.yml`. The output will be saved in the `out_4` folder.  
+This model is specified in the file `4_ano_line_content.yml`. For line-level predictions, we need to select a specific log file to analyze. In this case, we build and test models using the main log file, `container__01_000001.log`, from all runs. This log file is the largest for each run and can be considered the main log that spawns worker processes. To generate results, execute the command: `uv run python -m logdelta.config_runner -c 4_ano_line_content.yml`. The output will be saved in the `out_4` folder.  
 
 Now we have the results. Lets open one run line-by-line visualization log labeled as Normal, namely `PageRank_Normal_application_1445182159119_0012`,  to explain what is visualized. 
 ![line-by-line visual](images/4_2_line_visual.png)

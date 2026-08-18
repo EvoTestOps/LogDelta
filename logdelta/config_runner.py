@@ -145,7 +145,13 @@ def main(config_path):
     print(f"Done! See output in folder: {output_folder}")
 
 
-if __name__ == "__main__":
+def cli():
+    """Entry point for the `config-runner` console script and for `python -m logdelta.config_runner`.
+
+    `main()` takes the config path as an argument so it stays callable from Python; everything that
+    only makes sense when invoked from a shell — dotenv, warning filters, argument parsing — lives
+    here.
+    """
     # Load environment variables
     load_dotenv(find_dotenv())
 
@@ -180,3 +186,7 @@ if __name__ == "__main__":
 
     # Run main process
     main(config_path)
+
+
+if __name__ == "__main__":
+    cli()

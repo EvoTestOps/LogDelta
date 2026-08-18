@@ -7,16 +7,26 @@ Textual log line level anomaly detection. Which ones are anomalies?
 See [YouTube](https://www.youtube.com/playlist?list=PLTUjKYPvVhe6JhHBlkJN_yPhVDR5w2ej2) demonstrating the tool in action.
 
 ## Installation and Example
-We recommend using a virtual environment to ensure smooth operations.
+
+There are two different starting points below — pick the one that matches what you're doing.
+Don't run both `uv add logdelta` and `git clone` in the same directory: once you've cloned the
+repo, its own `pyproject.toml` already declares `logdelta`, so trying to `uv add` it there fails
+with a self-dependency error.
+
+### Using LogDelta as a dependency in your own project
+
 ```bash
-conda create -n logdelta python=3.11
-conda activate logdelta
+uv add logdelta
 ```
-Install logdelta. 
+Or with `pip`:
 ```bash
-pip install logdelta
+python -m pip install logdelta
 ```
-Download source code, and navigate to demo folder
+
+### Running the demo from this repo
+
+Clone the repo and navigate to the demo folder — no separate install step needed, `uv run` syncs
+the environment from the repo's own `pyproject.toml`/`uv.lock` on first use:
 ```bash
 git clone https://github.com/EvoTestOps/LogDelta.git
 cd LogDelta/demo
@@ -28,8 +38,13 @@ unzip Hadoop.zip -d Hadoop
 ```
 Run analysis
 ```bash
+uv run python -m logdelta.config_runner -c config.yml
+```
+Or with `pip` (after `pip install -e .` from the repo root):
+```bash
 python -m logdelta.config_runner -c config.yml
 ```
+
 Observe results in `LogDelta/demo/Output`. 
 
 For more examples see [LogDelta/demo/label_investigation](./demo/label_investigation) and [LogDelta/demo/full](./demo/full)

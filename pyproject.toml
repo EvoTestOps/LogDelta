@@ -34,9 +34,9 @@ classifiers = [
 
 requires-python = ">=3.9,<3.13"
 dependencies = [
-"loglead >= 1.2.1",
-"XlsxWriter"
+"loglead>=1.2.3",
+"XlsxWriter",
 ]
 
 [project.scripts]
-config-runner = "package_name.config_runner:main"
+config-runner = "logdelta.config_runner:cli"

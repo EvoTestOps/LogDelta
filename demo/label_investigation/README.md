@@ -43,12 +43,10 @@ Clone the repository:
    git clone https://github.com/EvoTestOps/LogDelta.git
    cd LogDelta/demo/label_investigation
 ```
-Create new virtual environment and install LogDelta and set up the environment:
-```bash
-conda create -n logdelta python=3.11
-conda activate logdelta
-pip install logdelta
-```
+No separate install step needed — the commands below use `uv run`, which syncs the environment
+from the repo's own `pyproject.toml`/`uv.lock` on first use. (If you're using `pip` instead, run
+`pip install -e .` from the repo root and drop the `uv run` prefix from the commands below.)
+
 Download the Hadoop dataset and extract it:
 ```bash
 wget -O Hadoop.zip https://zenodo.org/records/8196385/files/Hadoop.zip?download=1
@@ -56,23 +54,23 @@ unzip Hadoop.zip -d Hadoop
 ```
 Rename the runs with labels using the provided script:
 ```bash
-python label_hadoop_runs_orig.py
+uv run python label_hadoop_runs_orig.py
 ```
 Run the demo configurations:
 For file name visualization:
 ```bash
-python -m logdelta.config_runner -c 1_viz_file_names.yml
+uv run python -m logdelta.config_runner -c 1_viz_file_names.yml
 ```
 For textual content visualization:
 ```bash
-python -m logdelta.config_runner -c 2_viz_run_content.yml
+uv run python -m logdelta.config_runner -c 2_viz_run_content.yml
 ```
 For anomaly detection with run content:
 ```bash
-python -m logdelta.config_runner -c 3_ano_run_content.yml
+uv run python -m logdelta.config_runner -c 3_ano_run_content.yml
 ```
 For line-level anomaly detection:
 ```bash
-python -m logdelta.config_runner -c 4_ano_line_content.yml
+uv run python -m logdelta.config_runner -c 4_ano_line_content.yml
 ```
 Outputs will be saved in out_1, out_2, out_3, and out_4 folders, respectively.
