@@ -80,13 +80,15 @@ The **Files & Lines** scatter applies that same larger-or-smaller-than-normal lo
 ### Setup
 
 ```bash
-pip install logdelta
 git clone https://github.com/EvoTestOps/LogDelta.git
 cd LogDelta/demo/label_investigation
 wget -O Hadoop.zip https://zenodo.org/records/8196385/files/Hadoop.zip?download=1
 unzip Hadoop.zip -d Hadoop
-python label_hadoop_runs_orig.py
+uv run python label_hadoop_runs_orig.py
 ```
+No separate install step needed — `uv run` syncs the environment from the repo's own
+`pyproject.toml`/`uv.lock` on first use. (If you're using `pip` instead, `pip install -e .` from
+the repo root first.)
 
 `label_hadoop_runs_orig.py` renames each `Hadoop/application_<id>` folder to `<App>_<OriginalLabel>_application_<id>` (e.g. `PageRank_MachineDown_application_1445062781478_0012`), using the *original, uncorrected* labels from the dataset's `abnormal_label.txt`. Baking the label into the run name is what lets the later configs color/group plots by label via `group_by_indices` (splitting the run name on `_`) and filter comparison runs with wildcards like `"PageRank_Normal*"`.
 
@@ -96,10 +98,10 @@ python label_hadoop_runs_orig.py
 
 | Step | Config | Command | Output | What it shows |
 |---|---|---|---|---|
-| 1 | `1_viz_file_names.yml` | `python -m logdelta.config_runner -c 1_viz_file_names.yml` | `out_1/` (`L1`) | **Visualize, folder-level, file names** (`plot_run_file`) — the *Files & Lines* scatter plus a UMAP, each dot a run. A crude "lines vs. unique files" boundary already classifies ~76% of anomalies correctly. See "Why this works" above for why file names carry signal in Hadoop specifically. |
-| 2 | `2_viz_run_content.yml` | `python -m logdelta.config_runner -c 2_viz_run_content.yml` | `out_2/` (`L2`) | **Visualize, folder-level, log text** (`plot_run_content`) — the *Terms & Lines* scatter plus a UMAP, each dot still a run. Boundary-based classification improves to ~86%, and this is where the run `..._0020` labeled `MachineDown` first looks suspicious (it lands inconsistently across repeated UMAP runs and across plot types). |
-| 3 | `3_ano_run_content.yml` | `python -m logdelta.config_runner -c 3_ano_run_content.yml` | `out_3/` (`L2`, xlsx) | **Anomaly scoring, folder-level** (`anomaly_run_content`) — trains KMeans/IsolationForest/RarityModel/OOVDetector on the `Normal` runs' content, then scores every run against that model. Sorting by rank-sum surfaces 3 suspicious label candidates. |
-| 4 | `4_ano_line_content.yml` | `python -m logdelta.config_runner -c 4_ano_line_content.yml` | `out_4/` (`L4`, xlsx + HTML) | **Anomaly scoring, line-level** (`anomaly_line_content`) — per-line scores for each run's main log file (`container__01_000001.log`), written as a table *and* as the chronological plot, which reads as a "fingerprint" per run. Comparing fingerprints side-by-side across all `Normal` / `MachineDown` / `DiskFull` runs is what confirms the mislabels (e.g. spotting the recurring "lack of space for maps" message). |
+| 1 | `1_viz_file_names.yml` | `uv run python -m logdelta.config_runner -c 1_viz_file_names.yml` | `out_1/` (`L1`) | **Visualize, folder-level, file names** (`plot_run_file`) — the *Files & Lines* scatter plus a UMAP, each dot a run. A crude "lines vs. unique files" boundary already classifies ~76% of anomalies correctly. See "Why this works" above for why file names carry signal in Hadoop specifically. |
+| 2 | `2_viz_run_content.yml` | `uv run python -m logdelta.config_runner -c 2_viz_run_content.yml` | `out_2/` (`L2`) | **Visualize, folder-level, log text** (`plot_run_content`) — the *Terms & Lines* scatter plus a UMAP, each dot still a run. Boundary-based classification improves to ~86%, and this is where the run `..._0020` labeled `MachineDown` first looks suspicious (it lands inconsistently across repeated UMAP runs and across plot types). |
+| 3 | `3_ano_run_content.yml` | `uv run python -m logdelta.config_runner -c 3_ano_run_content.yml` | `out_3/` (`L2`, xlsx) | **Anomaly scoring, folder-level** (`anomaly_run_content`) — trains KMeans/IsolationForest/RarityModel/OOVDetector on the `Normal` runs' content, then scores every run against that model. Sorting by rank-sum surfaces 3 suspicious label candidates. |
+| 4 | `4_ano_line_content.yml` | `uv run python -m logdelta.config_runner -c 4_ano_line_content.yml` | `out_4/` (`L4`, xlsx + HTML) | **Anomaly scoring, line-level** (`anomaly_line_content`) — per-line scores for each run's main log file (`container__01_000001.log`), written as a table *and* as the chronological plot, which reads as a "fingerprint" per run. Comparing fingerprints side-by-side across all `Normal` / `MachineDown` / `DiskFull` runs is what confirms the mislabels (e.g. spotting the recurring "lack of space for maps" message). |
 
 Final corrected labels found via this process:
 
@@ -184,7 +186,7 @@ Referenced directly by the root `README.md` quickstart:
 cd demo
 wget -O Hadoop.zip https://zenodo.org/records/8196385/files/Hadoop.zip?download=1
 unzip Hadoop.zip -d Hadoop
-python -m logdelta.config_runner -c config.yml
+uv run python -m logdelta.config_runner -c config.yml
 ```
 
 This is not narrated or level-by-level like the other two — it's one file that defines a step for nearly every function (`distance_run_file` through `plot_file_content`), each with several parameter variants (different `content_format`/`vectorizer`/`mask` combinations). Treat it as a syntax cheat-sheet: when writing your own config, find the step type you need here and copy its shape.

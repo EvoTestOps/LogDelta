@@ -10,21 +10,25 @@ There is no test suite, linter, or CI configuration in this repo — it's a rese
 
 ## Install & run
 
-```bash
-conda create -n logdelta python=3.11
-conda activate logdelta
-pip install logdelta          # published package
-# or, for local development:
-pip install -e .
-```
-
-Run an analysis via the config-driven CLI (this is the primary way the tool is used):
+The project is managed with [`uv`](https://docs.astral.sh/uv/), matching its sister project
+[LogLead](https://github.com/EvoTestOps/LogLead). `pyproject.toml` + `uv.lock` + `.python-version`
+(3.11) are the whole setup — `uv run` syncs the environment on first use, so there is no separate
+install step for local development.
 
 ```bash
-python -m logdelta.config_runner -c path/to/config.yml
+uv run python -m logdelta.config_runner -c path/to/config.yml   # local checkout
 ```
 
-Note: the `config-runner` console-script entry point in `pyproject.toml` points at `package_name.config_runner:main`, which does not match the actual package name (`logdelta`) — it does not work as installed. Use `python -m logdelta.config_runner -c config.yml` instead, as documented in the README and demos.
+For use as a dependency:
+
+```bash
+uv add logdelta                  # published package
+python -m pip install logdelta   # or with pip
+```
+
+Either `python -m logdelta.config_runner -c config.yml` or the `config-runner` console script works
+(the script's entry point used to point at a nonexistent `package_name.config_runner:main`; it now
+points at `logdelta.config_runner:main`). The `python -m` form is what the README and demos use.
 
 ### Demos
 
@@ -33,7 +37,7 @@ Note: the `config-runner` console-script entry point in `pyproject.toml` points 
 ```bash
 wget -O Hadoop.zip https://zenodo.org/records/8196385/files/Hadoop.zip?download=1
 unzip Hadoop.zip -d Hadoop
-python -m logdelta.config_runner -c config.yml
+uv run python -m logdelta.config_runner -c config.yml
 ```
 
 `LOG_DATA_PATH` can be set (e.g. via a `.env` file, loaded with `python-dotenv`) as a fallback input folder when `input_data_folder` is not set in the config.
@@ -71,7 +75,7 @@ Everything funnels through **`logdelta/config_runner.py`**, which is the sole or
 - **`L1`–`L4` in output filenames** flatten the grid onto the four ways content is read: **L1** = folder-level over file *names* (never opens files), **L2** = folder-level over log *text*, **L3** = file-level, **L4** = line-level. The number is passed explicitly as `_write_output(..., level=N)` at each call site; `plot_run`/`anomaly_run` pick L1 vs L2 from their `file` flag.
 - **Run/file selection helpers** (`_prepare_runs`, `_prepare_files`, `_check_multiple_target_runs`) accept a flexible spec for `target_run`/`comparison_runs`/`target_files`: `"ALL"`, an exact name/list, an integer count, or a `*` wildcard pattern. Note that **all four branches of `_prepare_runs` filter out the target run from the comparison set** ([log_analysis_functions.py:137-155](logdelta/log_analysis_functions.py#L137-L155)) — this is the leave-one-out guarantee that keeps an anomaly model from being trained and tested on the same run, so a target listed among its own comparison runs is silently (and correctly) dropped from training.
 - **`_prepare_content()`** maps a `content_format` config value to the LogLead-enhanced column to actually compare: `Words` (tokenized), `3grams`, `File` (file names), `Sklearn` (raw/normalized message text for sklearn vectorizers), or `Parse-<X>` (dynamically calls `enhancer.parse_<x>()`, e.g. `Parse-Tip`, `Parse-Drain`).
-- Distance functions use LogLead's `LogDistance` (cosine/jaccard/compression/containment). Anomaly functions use LogLead's `AnomalyDetector` (`_run_anomaly_detection`) with pluggable `detectors`: `KMeans`, `IsolationForest`, `RarityModel`, `OOVDetector` — results get z-score-normalized and rank-summed across detectors (`_calculate_zscore_sum_anos`) to produce a single combined anomaly score.
+- Distance functions use LogLead's `LogDistance` (cosine/jaccard/compression/containment). Anomaly functions use LogLead's `AnomalyDetector` (`_run_anomaly_detection`) with pluggable `detectors`: `KMeans`, `IsolationForest`, `RarityModel`, `OOVDetector` — results get z-score-normalized and rank-summed across detectors (`_calculate_zscore_sum_anos`) to produce a single combined anomaly score. Any subset of the detectors is valid: `_run_anomaly_detection` seeds its result frame from the test data (so the caller's identity columns — `run` at folder level, `m_message` at line level — arrive regardless of which detectors ran) and `_calculate_zscore_sum_anos` ranks over whichever score columns are actually present.
 - Plot functions build a document-term matrix (Count/Tfidf vectorizer) and reduce it with UMAP, rendering **two** Plotly figures per call: a 2D UMAP scatter, and a "simple" scatter of lines vs. either unique files or unique terms. Which one the simple plot's x-axis shows is decided in `_plot_create_umap_plot` by the `file` argument: `True` (only `plot_run_file`) → *Files*; `False` or a filename string → *Unique terms*. `group_by_indices` lets you color points by parts of the run name (split on `_`).
 - **`_write_output()`** is the single sink for all results — every analysis/plot writes to the module-global `output_folder` (set once via `set_output_folder_and_format()`), with a filename encoding analysis type, level, target/comparison run, mask flag, content format, vectorizer, and timestamp. Tables go to CSV (tab-separated) or XLSX (`table_output` config key); plots go to standalone HTML (Plotly).
 - Module-level globals (`output_folder`, `table_output`, and `script_dir`-based `os.chdir()` at import time) mean this module is stateful — `set_output_folder_and_format()` must be called before any analysis function that writes output, and paths are resolved relative to `$PWD` at call time, not relative to the script location.
