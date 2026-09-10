@@ -224,16 +224,16 @@ Based on this evidence, I conclude that these two runs, labeled as anomalies, ar
 
 I reviewed the top anomaly messages and out-of-vocabulary messages across all the visualized machine-down logs. During this analysis, I identified an incorrect label in the second row, first from the left. For visual check the [video](https://youtu.be/2GWZob7K5h0?t=278) - the timestamp points to correct location. 
 
-As we see, this particular anomaly is caused by an out-of-space issue, as indicated by the log message: "Going to preempt 1 due to lack of space for maps." 
+As we see, this particular anomaly is caused by an out-of-space issue, as indicated by the log message: "Going to preempt 1 due to lack of space for maps." Then, I concluded that run 1445182151478_0015, labeled as Machine Down, was, in fact, Disk Full anomaly. However, [further analysis](label_analysis_revisited.md) done year and a half later reveals that label was indeed correct.  
 
-I conclude that this run, labeled as Machine Down, is, in fact, Disk Full anomaly.
+
 
 | ID                 | Original Label | Fixed Label |
 |---------------------|----------------|-------------|
 | 1445144423722_0024 | Normal         | Disk Full   |
 | 1445182159119_0017 | Machine Down   | Normal      |
 | 1445062781478_0020 | Machine Down   | Normal      |
-| 1445182151478_0015 | Machine Down   | Disk Full   |
+| 1445182151478_0015 | Machine Down   | ~~Disk Full~~   |
 
 
 
@@ -256,10 +256,11 @@ This concludes our somewhat accidental investigation into the incorrect labels. 
 | 1445144423722_0024 | Normal        | Disk Full      |
 | 1445182159119_0017 | Machine Down  | Normal         |
 | 1445062781478_0020 | Machine Down  | Normal         |
-| 1445182151478_0015 | Machine Down  | Disk Full      |
+| 1445182151478_0015 | Machine Down  | ~~Disk Full~~<sup>1</sup>      |
 | 1445182159119_0013 | Disk Full     | Machine Down   |
 | 1445182159119_0011 | Disk Full     | Machine Down   |
 
+<sup>1</sup> see [explanation](label_analysis_revisited.md)
 
 ### Missing Details and Dead Ends
 Many details and dead-ends were left out. For example, I performed checks using a script `find_string.py` to search for individual log messages in logs, which will be included as part of this demo package. 
